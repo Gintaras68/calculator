@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" class="page">
+  @include('partials/head.html')
+
+  <body class="page__body">
+    <div class="site-container">
+      @include('partials/header.html')
+      <main class="main">
+        <div class="desktop">
+          <div class="object-wrapper">
+            <article class="calc">
+              <div class="calc__body">
+                <div class="calc__screen">0</div>
+                <div class="calc__keyboard keyboard">
+                    <!-- Line 1 -->
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="C">C</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="/">&#247</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="*">*</button>
+                    </div>
+
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="-">-</button>
+                    </div>
+                    <!-- Line 2 - Digitals and ...-->
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="7">7</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="8">8</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="9">9</button>
+                    </div>
+                    <div class="keyboard__item keyboard__item--2v">
+                      <button class="keyboard__button" data-role="+">+</button>
+                    </div>
+
+                    <!-- Line 3 - Digitals and ...-->
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="4">4</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="5">5</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="6">6</button>
+                    </div>
+                    <div class="keyboard__item keyboard__item--2v">
+                      <button class="keyboard__button" data-role="=">=</button>
+                    </div>
+
+
+                    <!-- Line 4 - Zero, dot and ...-->
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="1">1</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="2">2</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role="3">3</button>
+                    </div>
+
+                    <div class="keyboard__item keyboard__item--2h">
+                      <button class="keyboard__button" data-role="0">0</button>
+                    </div>
+                    <div class="keyboard__item">
+                      <button class="keyboard__button" data-role=".">.</button>
+                    </div>
+                    <!-- Digitals -->
+
+
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </main>
+      @include('partials/footer.html')
+      <!-- @include('html/h1.html') пример include -->
+    </div>
+  </body>
+</html>
