@@ -14,6 +14,8 @@ let arg1,
   arg2,
   rezult = null;
 
+showVariables("PRADINE BUSENA");
+
 /* ---------      Darbo logika    -------------------------
   Mygtukas      numberString  screenC.. |  arg1  arg2  rezult  operand  | paaiskinimas
   - pradine b.    0           0             X     X     X                 pradioj tuscia, ekrane nulis
@@ -42,97 +44,108 @@ buttons.forEach((btn) => {
   btn.addEventListener("click", (e) => {
     const btnRole = e.currentTarget.dataset.role;
 
-    // tikrinam ar atitinka skaitmenu simbolius --- 0-1-2-3-4-5-6-7-8-9-. ---
+    // jei atitinka skaitmenu simbolius --- 0-1-2-3-4-5-6-7-8-9-. ---
     if (/^\d$/.test(btnRole) || btnRole === ".") {
       loadNum(btnRole);
+      renderScreen();
+      showVariables("51 - formuojamas skaicius", btnRole);
       return;
     }
 
     // jei norime isvalyti visus duomenis ...
     if (btnRole === "C") {
-      arg1 = arg2 = rezult = null;
-      isArg1 = isArg2 = isResult = false; // naikinti jei nenaudosime
-      operand = "";
-      numberString = "0";
-      screen.textContent = numberString;
-      isNew = true;
-      showVariables("Istrinu viska", btnRole);
+      clearAll();
+      renderScreen();
+      showVariables("59 - Istrinu viska", btnRole);
       return;
     }
 
-    // like mygtukai - operacijos. viskas priklauso nuo busenos.
-    // -----  orientuojames i pirma operanda:
+    // ------------------
+    // like mygtukai - operacijos. Viskas priklauso nuo busenu.
+    // ------------------
+
+    // <--- ignoruojam "=" jei dar nebuvo ivestas veiksmas
+    if (btnRole === "=" && !operand) {
+      console.log("nera nurodyta operacija", btnRole);
+      return;
+    }
+
+    // -----  surinktas 1-as argumentas ir operandas (ne ligybe!):
     if (!isArg1 && btnRole !== "=") {
       // uzbaigiamas pirmas operandas (nes jo nera) ir pridedam veiksmo zenkla
       // po pirmo skaiciaus ligybes netaikome - ignoruojame !
+      numberString ? "0" : numberString;
       arg1 = Number(numberString);
       numberString = "";
       isArg1 = isNew = true;
       operand = btnRole;
-      screen.textContent += operand;
-      showVariables("Pirmas skaitmuo ivestas", btnRole);
+      renderScreen();
+      showVariables("83 - Pirmas skaitmuo ivestas", btnRole);
       return;
     }
 
-    if (isArg1 && !isResult) {
-      // o jei pirmas yra - uzbaigiamas antras operandas.
-      // be to - mes jauturime veiksmo operanda. Esamas nuspaudimas - ateiciai.
-      arg2 = Number(numberString);
-      numberString = "";
-      isArg2 = isNew = true;
-      // Turim argumentus ir operanda - galim atlikti veiksmus
-      switch (operand) {
-        case "+":
-          rezult = arg1 + arg2;
-          break;
-
-        case "-":
-          rezult = arg1 - arg2;
-          break;
-
-        case "*":
-          rezult = arg1 * arg2;
-          break;
-
-        case "/":
-          rezult = arg1 / arg2;
-          break;
-
-        default:
-          break;
-      }
-      isResult = true;
-      arg1 = rezult;
-      arg2 = null;
-      isArg2 = false;
-      if (btnRole === "=") {
-        operand = "";
-        screen.textContent += "=" + rezult;
+    // ----   1-as argumentas jau yra. Tikrinti numberString:
+    //        a)  jei tuscia - tieisog uzfiksuojamas operandas - busimas veiksmas. Ignoruoti "=".
+    //                        - kartojant - galima pakeisti busima veiksma
+    //        b)  jei netuscia - fiksuojamas 2-as argumentas ir atliekamas veiksmas pagal esama operanda
+    //              papildomai:
+    //                  - jei tai "=" - tiesiog parodoma veiksmo eilute
+    //                  - jei tai operacija - rodom rezultata kaip 1-a argumenta ir nauja veiksma
+    // --------------------------------------------------------------------------------------------------
+    if (isArg1 && !isArg2) {
+      if (numberString === "") {
+        operand = btnRole;
+        renderScreen();
       } else {
-        screen.textContent = rezult + btnRole;
+        arg2 = Number(numberString);
+        numberString = "";
+        isArg2 = isNew = true;
       }
-      showVariables("atliktas veiksmas", btnRole);
-      return;
     }
 
-    // rezultatas kaip pirmas operandas - priimam veiksma:
-    if (isArg1 && isResult) {
-      // tiesiog naujas operandas veiksmams
-      console.log("naujas veiksmas");
+    // ↑ ↑ - gavom 2-a operanda - ↑ ↑
+    // ↓ ↓   atliekam operacija   ↓ ↓
 
+    switch (operand) {
+      case "+":
+        rezult = arg1 + arg2;
+        break;
+
+      case "-":
+        rezult = arg1 - arg2;
+        break;
+
+      case "*":
+        rezult = arg1 * arg2;
+        break;
+
+      case "/":
+        rezult = arg1 / arg2;
+        break;
+
+      default:
+        break;
+    }
+    isResult = true;
+    // dirbam su rezultatu
+    if (btnRole === "=") {
+      renderScreen();
+    } else {
+      arg1 = rezult;
+      arg2 = rezult = null;
+      isArg2 = isResult = false;
       operand = btnRole;
-      screen.textContent = arg1 + operand;
+      renderScreen();
     }
   });
 });
 
+// PROBLEMA: po rezultato is karto ivedant skaiciu - nedirba
+
 function showVariables(comment = "", role = "?") {
   console.log("↓ ------", comment, "------- ↓");
   console.log(
-    `IsNew: ${isNew}  | NumberString: ${numberString} | Pressed: ${role}  || isArg1: ${isArg1} , isArg2: ${isArg2}, isResult: ${isResult} `
-  );
-  console.log(
-    `Arg1: ${arg1}  | Arg2: ${arg2} | Operand: ${operand} | Result: ${rezult}`
+    `IsNew: ${isNew} | NumberString: "${numberString}" || isArg1: ${isArg1}, isArg2: ${isArg2}, isResult: ${isResult} || Arg1: ${arg1} | Arg2: ${arg2} | Operand: "${operand}" | Result: ${rezult} | Pressed: > ${role} <  `
   );
 }
 
@@ -141,29 +154,39 @@ function loadNum(symb) {
   if (symb === "." && numberString.includes(".")) {
     return;
   }
-  // jei skaiciu pradedam nuo kablelio, pridedam nuli pradzioje
-  if (symb === "." && numberString === "") {
-    numberString += "0.";
-    isNew = false;
-    screen.textContent += numberString;
-    showVariables("skaitmuo <1 ", symb);
-    return;
-  }
-  // vietoje nulio pradzioje - naujas skaitmuo (txt. eilute ir ekranas)
-  if (numberString === "0" && symb !== ".") {
-    numberString = symb;
-    screen.textContent = numberString;
-    isNew = false;
-    showVariables("Pradedamas pirmas sk.", symb);
-    return;
-  }
-  // kitais atvejais - be apribojimu pildom eilute (ir ekrana)
-  numberString += symb;
-  screen.textContent += symb;
-  isNew = isResult = false;
 
-  showVariables("formuojamas skaicius", symb);
-  return;
+  //  !!!  neatsizvelgiama ar jau yra argumentas !!!
+  // formuojama skaitmens eilute. Kaip pildyti ekrano turini?
+  if (isNew) {
+    if (symb === ".") {
+      numberString = "0.";
+    } else {
+      numberString = symb;
+    }
+    isNew = false;
+  } else {
+    numberString += symb;
+  }
 }
 
-function renderScreen() {}
+function renderScreen() {
+  const n1 = isArg1 ? arg1 : "";
+  const n2 = isArg2 ? arg2 : "";
+  const op = operand ? operand : "";
+
+  if (isResult) {
+    // gautas skaiciavimu rezultatas - pilna eilute
+    screen.textContent = n1 + op + n2 + "=" + rezult;
+  } else {
+    // dar nepaskaiciuota - formuojama operaciju eilute
+    screen.textContent = n1 + op + n2 + numberString;
+  }
+}
+
+function clearAll() {
+  arg1 = arg2 = rezult = null;
+  isArg1 = isArg2 = isResult = false; // naikinti jei nenaudosime
+  operand = "";
+  numberString = "0";
+  isNew = true;
+}
