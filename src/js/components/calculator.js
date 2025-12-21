@@ -46,6 +46,12 @@ buttons.forEach((btn) => {
 
     // jei atitinka skaitmenu simbolius --- 0-1-2-3-4-5-6-7-8-9-. ---
     if (/^\d$/.test(btnRole) || btnRole === ".") {
+      if (isResult) {
+        arg1 = arg2 = rezult = null;
+        isArg1 = isArg2 = isResult = false;
+        operand = "";
+        isNew = true;
+      }
       loadNum(btnRole);
       renderScreen();
       showVariables("51 - formuojamas skaicius", btnRole);
@@ -74,7 +80,6 @@ buttons.forEach((btn) => {
     if (!isArg1 && btnRole !== "=") {
       // uzbaigiamas pirmas operandas (nes jo nera) ir pridedam veiksmo zenkla
       // po pirmo skaiciaus ligybes netaikome - ignoruojame !
-      numberString ? "0" : numberString;
       arg1 = Number(numberString);
       numberString = "";
       isArg1 = isNew = true;
@@ -120,6 +125,11 @@ buttons.forEach((btn) => {
         break;
 
       case "/":
+        if (arg2 === 0) {
+          clearAll();
+          screen.textContent = "Error";
+          return;
+        }
         rezult = arg1 / arg2;
         break;
 
@@ -136,11 +146,11 @@ buttons.forEach((btn) => {
       isArg2 = isResult = false;
       operand = btnRole;
       renderScreen();
+      isNew = true;
     }
+    showVariables("Po atliktu skaicaivimu", btnRole);
   });
 });
-
-// PROBLEMA: po rezultato is karto ivedant skaiciu - nedirba
 
 function showVariables(comment = "", role = "?") {
   console.log("↓ ------", comment, "------- ↓");
@@ -155,8 +165,6 @@ function loadNum(symb) {
     return;
   }
 
-  //  !!!  neatsizvelgiama ar jau yra argumentas !!!
-  // formuojama skaitmens eilute. Kaip pildyti ekrano turini?
   if (isNew) {
     if (symb === ".") {
       numberString = "0.";
@@ -172,11 +180,14 @@ function loadNum(symb) {
 function renderScreen() {
   const n1 = isArg1 ? arg1 : "";
   const n2 = isArg2 ? arg2 : "";
-  const op = operand ? operand : "";
+  let op = operand ? operand : "";
+  if (op === "/") {
+    op = "÷";
+  }
 
   if (isResult) {
     // gautas skaiciavimu rezultatas - pilna eilute
-    screen.textContent = n1 + op + n2 + "=" + rezult;
+    screen.textContent = n1 + op + n2 + "=" + formatResult(rezult);
   } else {
     // dar nepaskaiciuota - formuojama operaciju eilute
     screen.textContent = n1 + op + n2 + numberString;
@@ -189,4 +200,25 @@ function clearAll() {
   operand = "";
   numberString = "0";
   isNew = true;
+}
+
+function formatResult(value, maxLen = 8) {
+  if (value === null || value === undefined) return "";
+  if (!Number.isFinite(value)) return "Error";
+
+  let text = value.toString();
+  if (text.length <= maxLen) return text;
+
+  // Pirmiausia bandoma tiesiog apriboti ilgi mazinant tiksluma
+  const precision = maxLen - 2; // rezervuojama vieta simboliams "0."
+  text = value.toPrecision(precision);
+
+  // Jei gautas rezultatas per ilgas - panaudojam eksponentine forma
+  if (text.length > maxLen) text = value.toExponential(6);
+
+  // jei yra, pasalinami nereiklaingi numeriai
+  text = text.replace(/\.?0+e/, "e").replace(/\.?0+$/, "");
+  console.log("Rezultatas: ", value, " |> Suformatavus: ", text);
+
+  return text;
 }
