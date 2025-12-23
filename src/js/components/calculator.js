@@ -1,23 +1,34 @@
-const device = document.querySelector(".calc");
-// if (!device) return;
+export function createCalculator(root) {
+  let device = null;
 
-const DISPLAY_LENGTH = 17; // maksimaklus simboliu kiekis ekrane
-const buttons = device.querySelectorAll(".keyboard__button");
-const screen = device.querySelector(".calc__screen");
+  if (typeof root === "string") {
+    device = document.querySelector(root);
+  } else if (root instanceof HTMLElement) {
+    device = root;
+  }
 
-let isNew = true; // naujo skaitmens indikatorius (nuimamas po pirmo skaitmens simbolio ivedimo)
-let numberString = "0"; // bus renkamas skaitmuo teksto formoje
-let operand = "";
-let isArg1 = false;
-let isArg2 = false;
-let isResult = false;
-let arg1,
-  arg2,
-  rezult = null;
+  if (!device) {
+    console.warn("Calculator init failed:", root);
+    return;
+  }
 
-showVariables("PRADINE BUSENA");
+  const DISPLAY_LENGTH = 17; // maksimaklus simboliu kiekis ekrane
+  const buttons = device.querySelectorAll(".keyboard__button");
+  const screen = device.querySelector(".calc__screen");
 
-/* ---------      Darbo logika    -------------------------
+  let isNew = true; // naujo skaitmens indikatorius (nuimamas po pirmo skaitmens simbolio ivedimo)
+  let numberString = "0"; // bus renkamas skaitmuo teksto formoje
+  let operand = "";
+  let isArg1 = false;
+  let isArg2 = false;
+  let isResult = false;
+  let arg1,
+    arg2,
+    rezult = null;
+
+  showVariables("PRADINE BUSENA");
+
+  /* ---------      Darbo logika    -------------------------
   Mygtukas      numberString  screenC.. |  arg1  arg2  rezult  operand  | paaiskinimas
   - pradine b.    0           0             X     X     X                 pradioj tuscia, ekrane nulis
   -----------------------------------------------------------------------------------------------------
@@ -38,190 +49,191 @@ showVariables("PRADINE BUSENA");
 
 */
 
-buttons.forEach((btn) => {
-  btn.addEventListener("click", (e) => {
-    const btnRole = e.currentTarget.dataset.role;
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const btnRole = e.currentTarget.dataset.role;
 
-    // jei atitinka skaitmenu simbolius --- 0-1-2-3-4-5-6-7-8-9-. ---
-    if (/^\d$/.test(btnRole) || btnRole === ".") {
-      if (isResult) {
-        arg1 = arg2 = rezult = null;
-        isArg1 = isArg2 = isResult = false;
-        operand = "";
-        isNew = true;
+      // jei atitinka skaitmenu simbolius --- 0-1-2-3-4-5-6-7-8-9-. ---
+      if (/^\d$/.test(btnRole) || btnRole === ".") {
+        if (isResult) {
+          arg1 = arg2 = rezult = null;
+          isArg1 = isArg2 = isResult = false;
+          operand = "";
+          isNew = true;
+        }
+        loadNum(btnRole);
+        renderScreen();
+        showVariables("51 - formuojamas skaicius", btnRole);
+        return;
       }
-      loadNum(btnRole);
-      renderScreen();
-      showVariables("51 - formuojamas skaicius", btnRole);
-      return;
-    }
 
-    // jei norime isvalyti visus duomenis ...
-    if (btnRole === "C") {
-      clearAll();
-      renderScreen();
-      showVariables("59 - Istrinu viska", btnRole);
-      return;
-    }
+      // jei norime isvalyti visus duomenis ...
+      if (btnRole === "C") {
+        clearAll();
+        renderScreen();
+        showVariables("59 - Istrinu viska", btnRole);
+        return;
+      }
 
-    // ------------------
-    // like mygtukai - operacijos. Viskas priklauso nuo busenu.
-    // ------------------
+      // ------------------
+      // like mygtukai - operacijos. Viskas priklauso nuo busenu.
+      // ------------------
 
-    // <--- ignoruojam "=" jei dar nebuvo ivestas veiksmas
-    if (btnRole === "=" && !operand) {
-      console.log("nera nurodyta operacija", btnRole);
-      return;
-    }
+      // <--- ignoruojam "=" jei dar nebuvo ivestas veiksmas
+      if (btnRole === "=" && !operand) {
+        console.log("nera nurodyta operacija", btnRole);
+        return;
+      }
 
-    // -----  surinktas 1-as argumentas ir operandas (ne ligybe!):
-    if (!isArg1 && btnRole !== "=") {
-      arg1 = Number(numberString);
-      numberString = "";
-      isArg1 = isNew = true;
-      operand = btnRole;
-      renderScreen();
-      showVariables("83 - Pirmas skaitmuo ivestas", btnRole);
-      return;
-    }
-
-    if (isArg1 && !isArg2) {
-      console.log("-----   Veiksmai kai nera antro argumento ...   -------");
-      if (numberString === "") {
+      // -----  surinktas 1-as argumentas ir operandas (ne ligybe!):
+      if (!isArg1 && btnRole !== "=") {
+        arg1 = Number(numberString);
+        numberString = "";
+        isArg1 = isNew = true;
         operand = btnRole;
         renderScreen();
-        return; // nieko nedarom - dar nera antro operando
+        showVariables("83 - Pirmas skaitmuo ivestas", btnRole);
+        return;
       }
 
-      arg2 = Number(numberString);
-      numberString = "";
-      isArg2 = isNew = true;
-    }
-
-    // ↑ ↑ - gavom 2-a operanda - ↑ ↑
-    // ↓ ↓   atliekam operacija   ↓ ↓
-
-    switch (operand) {
-      case "+":
-        rezult = arg1 + arg2;
-        break;
-
-      case "-":
-        rezult = arg1 - arg2;
-        break;
-
-      case "*":
-        rezult = arg1 * arg2;
-        break;
-
-      case "/":
-        if (arg2 === 0) {
-          clearAll();
-          screen.textContent = "Error";
-          return;
+      if (isArg1 && !isArg2) {
+        console.log("-----   Veiksmai kai nera antro argumento ...   -------");
+        if (numberString === "") {
+          operand = btnRole;
+          renderScreen();
+          return; // nieko nedarom - dar nera antro operando
         }
-        rezult = arg1 / arg2;
-        break;
 
-      default:
-        break;
-    }
-    isResult = true;
-    // dirbam su rezultatu
-    if (btnRole === "=") {
-      renderScreen();
-    } else {
-      arg1 = rezult;
-      arg2 = rezult = null;
-      isArg2 = isResult = false;
-      operand = btnRole;
-      renderScreen();
-      isNew = true;
-    }
-    showVariables("Po atliktu skaicaivimu", btnRole);
+        arg2 = Number(numberString);
+        numberString = "";
+        isArg2 = isNew = true;
+      }
+
+      // ↑ ↑ - gavom 2-a operanda - ↑ ↑
+      // ↓ ↓   atliekam operacija   ↓ ↓
+
+      switch (operand) {
+        case "+":
+          rezult = arg1 + arg2;
+          break;
+
+        case "-":
+          rezult = arg1 - arg2;
+          break;
+
+        case "*":
+          rezult = arg1 * arg2;
+          break;
+
+        case "/":
+          if (arg2 === 0) {
+            clearAll();
+            screen.textContent = "Error";
+            return;
+          }
+          rezult = arg1 / arg2;
+          break;
+
+        default:
+          break;
+      }
+      isResult = true;
+      // dirbam su rezultatu
+      if (btnRole === "=") {
+        renderScreen();
+      } else {
+        arg1 = rezult;
+        arg2 = rezult = null;
+        isArg2 = isResult = false;
+        operand = btnRole;
+        renderScreen();
+        isNew = true;
+      }
+      showVariables("Po atliktu skaicaivimu", btnRole);
+    });
   });
-});
 
-// ----- additional functions...  -----------------------
-function showVariables(comment = "", role = "?") {
-  const l1 = isArg1 ? "Yes" : "No ";
-  const l2 = isArg2 ? "Yes" : "No ";
-  const l3 = isResult ? "Yes" : "No ";
-  const l4 = isNew ? "Yes" : "No ";
-  console.log(
-    `↓¯¯¯¯ isArg1 | operand | isArg2 | isResult | isNew | <<< btn > numbStr. >> arg1 / arg2 / rezult | ¯¯¯  ${comment} ¯¯↓`
-  );
-  console.log(
-    ` →      ${l1}     > ${operand} <      ${l2}       ${l3}      ${l4}   | <<< "${role}" >  "${numberString}" >>  ${arg1}  /  ${arg2}  /  ${rezult} |`
-  );
-  console.log("");
-}
-
-function loadNum(symb) {
-  // nereaguojame jei bandoma iterpti antra kableli
-  if (symb === "." && numberString.includes(".")) {
-    return;
+  // ----- additional functions...  -----------------------
+  function showVariables(comment = "", role = "?") {
+    const l1 = isArg1 ? "Yes" : "No ";
+    const l2 = isArg2 ? "Yes" : "No ";
+    const l3 = isResult ? "Yes" : "No ";
+    const l4 = isNew ? "Yes" : "No ";
+    console.log(
+      `↓¯¯¯¯ isArg1 | operand | isArg2 | isResult | isNew | <<< btn > numbStr. >> arg1 / arg2 / rezult | ¯¯¯  ${comment} ¯¯↓`
+    );
+    console.log(
+      ` →      ${l1}     > ${operand} <      ${l2}       ${l3}      ${l4}   | <<< "${role}" >  "${numberString}" >>  ${arg1}  /  ${arg2}  /  ${rezult} |`
+    );
+    console.log("");
   }
 
-  if (isNew) {
-    if (symb === ".") {
-      numberString = "0.";
-    } else {
-      numberString = symb;
+  function loadNum(symb) {
+    // nereaguojame jei bandoma iterpti antra kableli
+    if (symb === "." && numberString.includes(".")) {
+      return;
     }
-  } else {
-    numberString += symb;
-  }
-  isNew = false;
-}
 
-function renderScreen() {
-  const n1 = isArg1 ? arg1 : "";
-  const n2 = isArg2 ? arg2 : "";
-  let op = operand ? operand : "";
-  if (op === "/") op = "÷";
-
-  if (isResult) {
-    const equal = formatResult(rezult);
-    const totalLength =
-      n1.toString().length + n2.toString().length + equal.length;
-
-    if (totalLength > DISPLAY_LENGTH - 2) {
-      screen.textContent = "... =" + equal;
+    if (isNew) {
+      if (symb === ".") {
+        numberString = "0.";
+      } else {
+        numberString = symb;
+      }
     } else {
-      screen.textContent = n1 + op + n2 + "=" + equal;
+      numberString += symb;
     }
-    return;
+    isNew = false;
   }
-  // dar nepaskaiciuota - formuojama operaciju eilute
-  screen.textContent = n1 + op + n2 + numberString;
-}
 
-function clearAll() {
-  arg1 = arg2 = rezult = null;
-  isArg1 = isArg2 = isResult = false; // naikinti jei nenaudosime
-  operand = "";
-  numberString = "0";
-  isNew = true;
-}
+  function renderScreen() {
+    const n1 = isArg1 ? arg1 : "";
+    const n2 = isArg2 ? arg2 : "";
+    let op = operand ? operand : "";
+    if (op === "/") op = "÷";
 
-function formatResult(value, maxLen = DISPLAY_LENGTH - 4) {
-  if (value === null || value === undefined) return ""; // nereraguojam jei nera rezultato
-  if (!Number.isFinite(value)) return "Error"; // klaidos pranesimas jei rezultatas - begalinis skaicius
+    if (isResult) {
+      const equal = formatResult(rezult);
+      const totalLength =
+        n1.toString().length + n2.toString().length + equal.length;
 
-  let text = value.toString();
-  if (text.length <= maxLen) return text;
+      if (totalLength > DISPLAY_LENGTH - 2) {
+        screen.textContent = "... =" + equal;
+      } else {
+        screen.textContent = n1 + op + n2 + "=" + equal;
+      }
+      return;
+    }
+    // dar nepaskaiciuota - formuojama operaciju eilute
+    screen.textContent = n1 + op + n2 + numberString;
+  }
 
-  // Pirmiausia bandoma tiesiog apriboti ilgi mazinant tiksluma
-  const precision = maxLen - 2; // rezervuojama vieta simboliams "0."
-  text = value.toPrecision(precision);
+  function clearAll() {
+    arg1 = arg2 = rezult = null;
+    isArg1 = isArg2 = isResult = false; // naikinti jei nenaudosime
+    operand = "";
+    numberString = "0";
+    isNew = true;
+  }
 
-  // Jei gautas rezultatas per ilgas - panaudojam eksponentine forma
-  if (text.length > maxLen) text = value.toExponential(6);
+  function formatResult(value, maxLen = DISPLAY_LENGTH - 4) {
+    if (value === null || value === undefined) return ""; // nereraguojam jei nera rezultato
+    if (!Number.isFinite(value)) return "Error"; // klaidos pranesimas jei rezultatas - begalinis skaicius
 
-  // jei yra, pasalinami nereiklaingi numeriai
-  text = text.replace(/\.?0+e/, "e").replace(/\.?0+$/, "");
+    let text = value.toString();
+    if (text.length <= maxLen) return text;
 
-  console.log("Rezultatas: ", value, " |> Suformatavus: ", text);
-  return text;
+    // Pirmiausia bandoma tiesiog apriboti ilgi mazinant tiksluma
+    const precision = maxLen - 2; // rezervuojama vieta simboliams "0."
+    text = value.toPrecision(precision);
+
+    // Jei gautas rezultatas per ilgas - panaudojam eksponentine forma
+    if (text.length > maxLen) text = value.toExponential(6);
+
+    // jei yra, pasalinami nereiklaingi numeriai
+    text = text.replace(/\.?0+e/, "e").replace(/\.?0+$/, "");
+
+    console.log("Rezultatas: ", value, " |> Suformatavus: ", text);
+    return text;
+  }
 }

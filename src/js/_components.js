@@ -1,3 +1,4 @@
 // console.log("components");
-import { myCalculator } from "./components/calculator.js";
-// myCalculator();
+import { createCalculator } from "./components/calculator.js";
+
+createCalculator(document.querySelector(".calc"));
